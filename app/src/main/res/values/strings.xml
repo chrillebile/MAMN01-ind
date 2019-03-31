@@ -5,4 +5,5 @@
     <string name="select_sensor">Choose sensor(s) to test:</string>
     <string name="button_compas">COMPASS</string>
     <string name="button_accelerometers">ACCELEROMETERS</string>
+    <string name="heading_compass">Heading: %d ° %s</string>
 </resources>

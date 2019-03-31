@@ -16,11 +16,9 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
     ImageView compass_img;
     TextView heading_text;
     private SensorManager sensorManager;
-    private Sensor rotation, accelerometer, magnetic_field;
-    private boolean sensorExist = false;
+    private Sensor[] sensors;
     float[] rMat = new float[9];
     float[] orientation = new float[3];
-    int mAzimuth;
     private float[] mLastAccelerometer = new float[3];
     private float[] mLastMagnetometer = new float[3];
     private boolean mLastAccelerometerSet = false;
@@ -33,19 +31,39 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         compass_img = findViewById(R.id.imageView_compass);
         heading_text = findViewById(R.id.textView_heading);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        //
+        // Check if phone can run compass.
         checkSensorExist();
     }
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if (sensorEvent.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR){
-            SensorManager.getRotationMatrixFromVector(rMat, sensorEvent.values);
-            mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
+        int mAzimuth = 0;
+        // Check if we are using the roatation sensor or acc and magnetic.
+        if(sensors.length == 1) {
+            if (sensorEvent.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+                SensorManager.getRotationMatrixFromVector(rMat, sensorEvent.values);
+                mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
+            }
+        } else {
+            if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+                System.arraycopy(sensorEvent.values, 0, mLastAccelerometer, 0, sensorEvent.values.length);
+                mLastAccelerometerSet = true;
+            } else if (sensorEvent.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+                System.arraycopy(sensorEvent.values, 0, mLastMagnetometer, 0, sensorEvent.values.length);
+                mLastMagnetometerSet = true;
+            }
+
+            if (mLastMagnetometerSet && mLastAccelerometerSet){
+                SensorManager.getRotationMatrix(rMat, null, mLastAccelerometer, mLastMagnetometer);
+                SensorManager.getOrientation(rMat, orientation);
+                mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
+            }
         }
 
         mAzimuth = Math.round(mAzimuth);
-        compass_img.setRotation(-mAzimuth);
+
+        // Updater the UI
+        updateUI(mAzimuth);
     }
 
     @Override
@@ -53,13 +71,36 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
 
     }
 
-    public void checkSensorExist(){
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterSensors();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkSensorExist();
+    }
+
+    private void checkSensorExist(){
         // Check if phone has a compass sensor
         if(sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) == null){
-            alterNoSensor();
+            //Check if phone instead ha an magnetic field and accelrometer.
+            if(sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) == null ||
+                    sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) == null){
+                alterNoSensor();
+            } else {
+                sensors = new Sensor[2];
+                sensors[0] = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                sensors[1] = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+                registerSensor(sensors[0]);
+                registerSensor(sensors[1]);
+            }
         } else {
-            rotation = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-            sensorExist = registerSensor(rotation);
+            sensors = new Sensor[1];
+            sensors[0] = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+            registerSensor(sensors[0]);
         }
     }
 
@@ -67,8 +108,39 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         return sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
     }
 
-    private void unregisterSensor(Sensor sensor){
-        sensorManager.unregisterListener(this, sensor);
+    private void unregisterSensors(){
+        for (Sensor sensor : sensors) {
+            sensorManager.unregisterListener(this, sensor);
+        }
+    }
+
+    private void updateUI(int mAzimuth){
+        compass_img.setRotation(-mAzimuth);
+        // ToDo: Change so this is a string that can be formated in strings.xml
+        heading_text.setText("Heading: " + mAzimuth + "° " + getDirectionLetter(mAzimuth));
+    }
+
+    private String getDirectionLetter(int mAzimuth){
+        String direction = "N";
+
+        if (mAzimuth >= 350 || mAzimuth <= 10)
+            direction = "N";
+        if (mAzimuth < 350 && mAzimuth > 280)
+            direction = "NW";
+        if (mAzimuth <= 280 && mAzimuth > 260)
+            direction = "W";
+        if (mAzimuth <= 260 && mAzimuth > 190)
+            direction = "SW";
+        if (mAzimuth <= 190 && mAzimuth > 170)
+            direction = "S";
+        if (mAzimuth <= 170 && mAzimuth > 100)
+            direction = "SE";
+        if (mAzimuth <= 100 && mAzimuth > 80)
+            direction = "E";
+        if (mAzimuth <= 80 && mAzimuth > 10)
+            direction = "NE";
+
+        return direction;
     }
 
     private void alterNoSensor(){
@@ -82,17 +154,4 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
                 });
         alertDialog.show();
     }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterSensor(rotation);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        unregisterSensor(rotation);
-    }
-
 }
