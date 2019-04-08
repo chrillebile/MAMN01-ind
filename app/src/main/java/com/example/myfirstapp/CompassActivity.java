@@ -6,6 +6,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -23,6 +26,7 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
     private float[] mLastMagnetometer = new float[3];
     private boolean mLastAccelerometerSet = false;
     private boolean mLastMagnetometerSet = false;
+    Vibrator vibrator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +35,7 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         compass_img = findViewById(R.id.imageView_compass);
         heading_text = findViewById(R.id.textView_heading);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         // Check if phone can run compass.
         checkSensorExist();
     }
@@ -116,31 +121,35 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
 
     private void updateUI(int mAzimuth){
         compass_img.setRotation(-mAzimuth);
-        // ToDo: Change so this is a string that can be formated in strings.xml
-        heading_text.setText("Heading: " + mAzimuth + "° " + getDirectionLetter(mAzimuth));
+        heading_text.setText(getString(R.string.heading_compass, mAzimuth, getDirectionLetter(mAzimuth)));
     }
 
     private String getDirectionLetter(int mAzimuth){
-        String direction = "N";
-
-        if (mAzimuth >= 350 || mAzimuth <= 10)
-            direction = "N";
+        if (mAzimuth >= 350 || mAzimuth <= 10) {
+            vibrate();
+            return "N";
+        }
         if (mAzimuth < 350 && mAzimuth > 280)
-            direction = "NW";
+            return "NW";
         if (mAzimuth <= 280 && mAzimuth > 260)
-            direction = "W";
+            return "W";
         if (mAzimuth <= 260 && mAzimuth > 190)
-            direction = "SW";
+            return "SW";
         if (mAzimuth <= 190 && mAzimuth > 170)
-            direction = "S";
+            return "S";
         if (mAzimuth <= 170 && mAzimuth > 100)
-            direction = "SE";
+            return "SE";
         if (mAzimuth <= 100 && mAzimuth > 80)
-            direction = "E";
+            return "E";
         if (mAzimuth <= 80 && mAzimuth > 10)
-            direction = "NE";
+            return "NE";
+        return "ERROR";
+    }
 
-        return direction;
+    private void vibrate(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(1, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
     }
 
     private void alterNoSensor(){
