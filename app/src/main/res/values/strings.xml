@@ -6,4 +6,9 @@
     <string name="button_compas">COMPASS</string>
     <string name="button_accelerometers">ACCELEROMETERS</string>
     <string name="heading_compass">Heading: %d ° %s</string>
+    <string name="accelerometer_title">Accelerometer values:</string>
+    <string name="x_accelerometer">X: %f</string>
+    <string name="y_accelerometer">Y: %f</string>
+    <string name="z_accelerometer">Z: %f</string>
+    <string name="direction_accelerometer">%s</string>
 </resources>
