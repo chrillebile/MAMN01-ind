@@ -30,10 +30,10 @@ public class AccelerometerActivity extends AppCompatActivity implements SensorEv
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if(sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-            x.setText("X: " + sensorEvent.values[0]);
-            y.setText("Y: " + sensorEvent.values[1]);
-            z.setText("Z: " + sensorEvent.values[2]);
-            direction.setText(getDirection());
+            x.setText(getString(R.string.x_accelerometer, sensorEvent.values[0]));
+            y.setText(getString(R.string.y_accelerometer, sensorEvent.values[1]));
+            z.setText(getString(R.string.z_accelerometer, sensorEvent.values[2]));
+            direction.setText(getDirection(sensorEvent));
         }
     }
 
@@ -63,19 +63,47 @@ public class AccelerometerActivity extends AppCompatActivity implements SensorEv
         }
     }
 
-    private boolean registerSensor(Sensor sensor){
-        return sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
+    private void registerSensor(Sensor sensor){
+        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
     }
 
     private void unregisterSensor(){
         sensorManager.unregisterListener(this, gravitySensor);
     }
 
-    private String getDirection(){
+    private String getDirection(SensorEvent sensorEvent){
         // Add directions
-        String direct = "Up";
+        int biggest = 0;
+        float max = 0;
+        for(int i = 0; i < sensorEvent.values.length; i++){
+            if(Math.abs(sensorEvent.values[i]) > max){
+                biggest = i;
+                max = Math.abs(sensorEvent.values[i]);
+            }
+        }
 
-        return direct;
+        switch (biggest){
+            case 0:
+                if(sensorEvent.values[0] > 0){
+                    return getString(R.string.direction_accelerometer, "LEFT");
+                } else {
+                    return getString(R.string.direction_accelerometer, "RIGHT");
+                }
+            case 1:
+                if(sensorEvent.values[1] > 0){
+                    return getString(R.string.direction_accelerometer, "UP");
+                } else {
+                    return getString(R.string.direction_accelerometer, "DOWN");
+                }
+            case 2:
+                if(sensorEvent.values[2] > 0){
+                    return getString(R.string.direction_accelerometer, "SCREEN UP");
+                } else {
+                    return getString(R.string.direction_accelerometer, "SCREEN DOWN");
+                }
+            default:
+                return "ERROR";
+        }
     }
 
     private void alterNoSensor(){
