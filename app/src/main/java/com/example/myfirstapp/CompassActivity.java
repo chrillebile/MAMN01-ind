@@ -129,21 +129,19 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
             extra();
             return "N";
         }
-        if (mAzimuth < 350 && mAzimuth > 280)
+        if (mAzimuth > 280)
             return "NW";
-        if (mAzimuth <= 280 && mAzimuth > 260)
+        if (mAzimuth > 260)
             return "W";
-        if (mAzimuth <= 260 && mAzimuth > 190)
+        if (mAzimuth > 190)
             return "SW";
-        if (mAzimuth <= 190 && mAzimuth > 170)
+        if (mAzimuth > 170)
             return "S";
-        if (mAzimuth <= 170 && mAzimuth > 100)
+        if (mAzimuth > 100)
             return "SE";
-        if (mAzimuth <= 100 && mAzimuth > 80)
+        if (mAzimuth > 80)
             return "E";
-        if (mAzimuth <= 80 && mAzimuth > 10)
-            return "NE";
-        return "ERROR";
+        return "NE";
     }
 
     private void extra(){
