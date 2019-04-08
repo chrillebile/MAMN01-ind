@@ -126,7 +126,7 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
 
     private String getDirectionLetter(int mAzimuth){
         if (mAzimuth >= 350 || mAzimuth <= 10) {
-            vibrate();
+            extra();
             return "N";
         }
         if (mAzimuth < 350 && mAzimuth > 280)
@@ -146,10 +146,11 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         return "ERROR";
     }
 
-    private void vibrate(){
+    private void extra(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator.vibrate(VibrationEffect.createOneShot(1, VibrationEffect.DEFAULT_AMPLITUDE));
         }
+        this.getWindow().getDecorView().setBackgroundColor(getColor(R.color.pink));
     }
 
     private void alterNoSensor(){
