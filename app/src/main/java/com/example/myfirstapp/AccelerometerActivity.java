@@ -16,6 +16,7 @@ public class AccelerometerActivity extends AppCompatActivity implements SensorEv
     TextView x, y, z, direction;
     private SensorManager sensorManager;
     private Sensor gravitySensor;
+    private String direc = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +36,12 @@ public class AccelerometerActivity extends AppCompatActivity implements SensorEv
             x.setText(getString(R.string.x_accelerometer, sensorEvent.values[0]));
             y.setText(getString(R.string.y_accelerometer, sensorEvent.values[1]));
             z.setText(getString(R.string.z_accelerometer, sensorEvent.values[2]));
-            direction.setText(getString(R.string.direction_accelerometer, getDirection(sensorEvent)));
+            String newDirec = getDirection(sensorEvent);
+            if(!direc.equals(newDirec)) {
+                direc = newDirec;
+                direction.setText(getString(R.string.direction_accelerometer, direc));
+                changeScreenColor(direc);
+            }
         }
     }
 
@@ -106,6 +112,35 @@ public class AccelerometerActivity extends AppCompatActivity implements SensorEv
             default:
                 return "ERROR";
         }
+    }
+
+    private void changeScreenColor(String direc){
+        switch (direc){
+            case "LEFT":
+                setScreenColor(getColor(R.color.red));
+                break;
+            case "RIGHT":
+                setScreenColor(getColor(R.color.green));
+                break;
+            case "UP":
+                setScreenColor(getColor(R.color.blue));
+                break;
+            case "DOWN":
+                setScreenColor(getColor(R.color.pink));
+                break;
+            case "SCREEN UP":
+                setScreenColor(getColor(R.color.white));
+                break;
+            case "SCREEN DOWN":
+                setScreenColor(getColor(R.color.yellow));
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void setScreenColor(int color){
+        this.getWindow().getDecorView().setBackgroundColor(color);
     }
 
     private void alterNoSensor(){
