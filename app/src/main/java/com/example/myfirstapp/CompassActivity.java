@@ -27,6 +27,7 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
     private boolean mLastAccelerometerSet = false;
     private boolean mLastMagnetometerSet = false;
     Vibrator vibrator;
+    static final float ALPHA = 0.25f; // if ALPHA = 1 OR 0, no filter applies.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +47,7 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         // Check if we are using the roatation sensor or acc and magnetic.
         if(sensors.length == 1) {
             if (sensorEvent.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+                rMat = lowPass(sensorEvent.values.clone(), rMat);
                 SensorManager.getRotationMatrixFromVector(rMat, sensorEvent.values);
                 mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
             }
@@ -59,6 +61,8 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
             }
 
             if (mLastMagnetometerSet && mLastAccelerometerSet){
+                lowPass(sensorEvent.values.clone(), mLastMagnetometer);
+                lowPass(sensorEvent.values.clone(), mLastAccelerometer);
                 SensorManager.getRotationMatrix(rMat, null, mLastAccelerometer, mLastMagnetometer);
                 SensorManager.getOrientation(rMat, orientation);
                 mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
@@ -109,8 +113,8 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         }
     }
 
-    private boolean registerSensor(Sensor sensor){
-        return sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
+    private void registerSensor(Sensor sensor){
+        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
     }
 
     private void unregisterSensors(){
@@ -149,6 +153,16 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
             vibrator.vibrate(VibrationEffect.createOneShot(1, VibrationEffect.DEFAULT_AMPLITUDE));
         }
         this.getWindow().getDecorView().setBackgroundColor(getColor(R.color.pink));
+    }
+
+    protected float[] lowPass(float[] input, float[] output){
+        if (output == null) return input;
+
+        for (int i = 0; i < input.length; i++){
+            output[i] += ALPHA * (input[i] - output[i]);
+        }
+
+        return output;
     }
 
     private void alterNoSensor(){
