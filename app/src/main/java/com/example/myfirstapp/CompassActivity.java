@@ -6,6 +6,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
@@ -23,6 +26,8 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
     private float[] mLastMagnetometer = new float[3];
     private boolean mLastAccelerometerSet = false;
     private boolean mLastMagnetometerSet = false;
+    Vibrator vibrator;
+    static final float ALPHA = 0.25f; // if ALPHA = 1 OR 0, no filter applies.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +36,7 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         compass_img = findViewById(R.id.imageView_compass);
         heading_text = findViewById(R.id.textView_heading);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         // Check if phone can run compass.
         checkSensorExist();
     }
@@ -41,6 +47,7 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         // Check if we are using the roatation sensor or acc and magnetic.
         if(sensors.length == 1) {
             if (sensorEvent.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+                rMat = lowPass(sensorEvent.values.clone(), rMat);
                 SensorManager.getRotationMatrixFromVector(rMat, sensorEvent.values);
                 mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
             }
@@ -54,6 +61,8 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
             }
 
             if (mLastMagnetometerSet && mLastAccelerometerSet){
+                lowPass(sensorEvent.values.clone(), mLastMagnetometer);
+                lowPass(sensorEvent.values.clone(), mLastAccelerometer);
                 SensorManager.getRotationMatrix(rMat, null, mLastAccelerometer, mLastMagnetometer);
                 SensorManager.getOrientation(rMat, orientation);
                 mAzimuth = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
@@ -104,8 +113,8 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
         }
     }
 
-    private boolean registerSensor(Sensor sensor){
-        return sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
+    private void registerSensor(Sensor sensor){
+        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_UI);
     }
 
     private void unregisterSensors(){
@@ -116,31 +125,44 @@ public class CompassActivity extends AppCompatActivity implements SensorEventLis
 
     private void updateUI(int mAzimuth){
         compass_img.setRotation(-mAzimuth);
-        // ToDo: Change so this is a string that can be formated in strings.xml
-        heading_text.setText("Heading: " + mAzimuth + "° " + getDirectionLetter(mAzimuth));
+        heading_text.setText(getString(R.string.heading_compass, mAzimuth, getDirectionLetter(mAzimuth)));
     }
 
     private String getDirectionLetter(int mAzimuth){
-        String direction = "N";
+        if (mAzimuth >= 350 || mAzimuth <= 10) {
+            extra();
+            return "N";
+        }
+        if (mAzimuth > 280)
+            return "NW";
+        if (mAzimuth > 260)
+            return "W";
+        if (mAzimuth > 190)
+            return "SW";
+        if (mAzimuth > 170)
+            return "S";
+        if (mAzimuth > 100)
+            return "SE";
+        if (mAzimuth > 80)
+            return "E";
+        return "NE";
+    }
 
-        if (mAzimuth >= 350 || mAzimuth <= 10)
-            direction = "N";
-        if (mAzimuth < 350 && mAzimuth > 280)
-            direction = "NW";
-        if (mAzimuth <= 280 && mAzimuth > 260)
-            direction = "W";
-        if (mAzimuth <= 260 && mAzimuth > 190)
-            direction = "SW";
-        if (mAzimuth <= 190 && mAzimuth > 170)
-            direction = "S";
-        if (mAzimuth <= 170 && mAzimuth > 100)
-            direction = "SE";
-        if (mAzimuth <= 100 && mAzimuth > 80)
-            direction = "E";
-        if (mAzimuth <= 80 && mAzimuth > 10)
-            direction = "NE";
+    private void extra(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(1, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+        this.getWindow().getDecorView().setBackgroundColor(getColor(R.color.pink));
+    }
 
-        return direction;
+    protected float[] lowPass(float[] input, float[] output){
+        if (output == null) return input;
+
+        for (int i = 0; i < input.length; i++){
+            output[i] += ALPHA * (input[i] - output[i]);
+        }
+
+        return output;
     }
 
     private void alterNoSensor(){
