@@ -11,4 +11,10 @@
     <string name="y_accelerometer">Y: %f</string>
     <string name="z_accelerometer">Z: %f</string>
     <string name="direction_accelerometer">%s</string>
+    <string name="direction_accelerometer_up">UP</string>
+    <string name="direction_accelerometer_down">DOWN</string>
+    <string name="direction_accelerometer_left">LEFT</string>
+    <string name="direction_accelerometer_right">RIGHT</string>
+    <string name="direction_accelerometer_screen_up">SCREEN UP</string>
+    <string name="direction_accelerometer_screen_down">SCREEN DOWN</string>
 </resources>

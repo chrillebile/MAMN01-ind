@@ -93,21 +93,21 @@ public class AccelerometerActivity extends AppCompatActivity implements SensorEv
         switch (biggest){
             case 0:
                 if(sensorEvent.values[0] > 0){
-                    return "LEFT";
+                    return getString(R.string.direction_accelerometer_left);
                 } else {
-                    return "RIGHT";
+                    return getString(R.string.direction_accelerometer_right);
                 }
             case 1:
                 if(sensorEvent.values[1] > 0){
-                    return "UP";
+                    return getString(R.string.direction_accelerometer_up);
                 } else {
-                    return "DOWN";
+                    return getString(R.string.direction_accelerometer_down);
                 }
             case 2:
                 if(sensorEvent.values[2] > 0){
-                    return "SCREEN UP";
+                    return getString(R.string.direction_accelerometer_screen_up);
                 } else {
-                    return "SCREEN DOWN";
+                    return getString(R.string.direction_accelerometer_screen_down);
                 }
             default:
                 return "ERROR";
